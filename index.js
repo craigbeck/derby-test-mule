@@ -6,6 +6,11 @@ const bundle = require('racer-bundle');
 // used to setup websocket connections
 const highway = require('racer-highway');
 
+const webpack = require("webpack");
+const webpackMiddleware = require("webpack-dev-middleware");
+const webpackConfig = require('./webpack.config');
+const webpackCompiler = webpack(webpackConfig);
+
 // separate the file for client side code
 // when app.ts was included here racer-bundle tries bundling
 // server code, including node built-ins for the browser
@@ -37,6 +42,12 @@ function setup(app, options, cb) {
   const expressApp = express(options);
 
   var publicDir = __dirname + '/public';
+  expressApp.use(webpackMiddleware(webpackCompiler, {
+    // middleware options...
+    serverSideRender: true,
+    index: false,
+    publicPath: webpackConfig.output.publicPath
+  }))
   expressApp.use(express.static(publicDir));
   expressApp.use(backend.modelMiddleware());
   expressApp.use(app.router());
