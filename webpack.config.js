@@ -15,8 +15,8 @@ DerbyViewsPlugin.prototype.apply = function(compiler) {
   });
   virtualModules.apply(compiler);
   compiler.hooks.compilation.tap('DerbyViewsPlugin', function() {
-    const app = Derby.createApp('derby-views-plugin', './app');
-    const viewSource = app._viewsSource({server: true, minify: true});
+    const app = require('./app');
+    const viewSource = app._viewsSource({server: false, minify: false});
     virtualModules.writeModule(viewsPath, viewSource);
   });
 }
