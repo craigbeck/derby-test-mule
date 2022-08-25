@@ -1,9 +1,8 @@
 const derby = require('derby');
-
-console.log('dirname ', __dirname);
-console.log('filename', __filename);
+require('racer-highway');
 
 const app = derby.createApp('test-mule', __filename);
+
 
 // loading view from wrong location
 // or loading views when views dont exist
