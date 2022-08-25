@@ -1,9 +1,9 @@
-const webpack = require('webpack');
 const path = require('node:path');
+const webpack = require('webpack');
 const VirtualModulesPlugin = require('webpack-virtual-modules');
 const { WebpackDeduplicationPlugin } = require('webpack-deduplication-plugin');
-const Derby = require('derby');
 
+const APP_PATH = './app';
 
 function DerbyViewsPlugin() {}
 DerbyViewsPlugin.prototype.apply = function(compiler) {
@@ -11,13 +11,19 @@ DerbyViewsPlugin.prototype.apply = function(compiler) {
   const pkg = require(pkgPath);
   const viewsPath = '../derby/lib/_views.js';
   const virtualModules = new VirtualModulesPlugin({
-    [viewsPath]: 'module.exports = function serializedViews(){ /* SERIALIZED_VIEWS derby/lib/_views */ };',
+    [viewsPath]: `module.exports = function serializedViews(){ /* SERIALIZED_VIEWS ${viewsPath} */ };`,
   });
   virtualModules.apply(compiler);
   compiler.hooks.compilation.tap('DerbyViewsPlugin', function() {
-    const app = require('./app');
+    const originalNodeEnv = process.env.NODE_ENV;
+    // hack to work around Derby listening for changes and holding process open
+    process.env.NODE_ENV = 'production';
+    const app = require(APP_PATH);
+    console.log('APP', app);
     const viewSource = app._viewsSource({server: false, minify: false});
     virtualModules.writeModule(viewsPath, viewSource);
+    process.env.NODE_ENV = originalNodeEnv;
+    // fs.writeFileSync(`${app.name}.debug.views.js`, viewSource, {encoding: 'utf-8'});
   });
 }
 

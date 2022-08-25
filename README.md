@@ -12,6 +12,9 @@
 - derby message error: ShareDBError: Invalid or unknown message {"derby":"app","name":"test-mule","hash":"{{DERBY_SCRIPT_HASH}}"}
 - what do we need DERBY_SCRIPT_HASH for?
 - Derby APP_NAME needs to be shared between DerbyViewsPlugin and app instance
+- something being held open with views plugin -- need to shutdown
+  - `./app` already calling `derby.createApp()`
+  - HACK: temprarily chenge NODE_ENV to `production` in views plugin
 
 
  TODO
@@ -24,6 +27,7 @@
  - [ ] resolve attachment error
  - [ ] `saddle` update package `main`
  - [ ] `derby` debrowserified; 
+ - [ ] fix `isProduction`: allow using something other than `NODE_ENV === 'produciton'` for plugin usage
 
 
  ## saddle
