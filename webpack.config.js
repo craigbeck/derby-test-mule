@@ -2,6 +2,7 @@ const path = require('node:path');
 const webpack = require('webpack');
 const VirtualModulesPlugin = require('webpack-virtual-modules');
 const { WebpackDeduplicationPlugin } = require('webpack-deduplication-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 
 const APP_PATH = './app';
 
@@ -19,7 +20,6 @@ DerbyViewsPlugin.prototype.apply = function(compiler) {
     // hack to work around Derby listening for changes and holding process open
     process.env.NODE_ENV = 'production';
     const app = require(APP_PATH);
-    console.log('APP', app);
     const viewSource = app._viewsSource({server: false, minify: false});
     virtualModules.writeModule(viewsPath, viewSource);
     process.env.NODE_ENV = originalNodeEnv;
@@ -31,24 +31,42 @@ DerbyViewsPlugin.prototype.apply = function(compiler) {
 
 const config = {
   mode: 'development',
-  entry: './app/index.js',
+  entry: [
+    'webpack-hot-middleware/client',
+    './app/index.js',
+  ],
   optimization: {
     chunkIds: 'named',
     moduleIds: 'named',
     concatenateModules: true,
+    runtimeChunk: 'single',
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all'
+        }
+      }
+    },
   },
   output: {
-    filename: 'index.js',
+    filename: '[name]-[hash].js',
+    chunkFilename: '[id]-[chunkhash].js',
     path: path.resolve(__dirname, 'public'),
+    clean: true,
   },
   devtool: 'source-map',
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
     new webpack.DefinePlugin({
       'process.title': JSON.stringify('browser'),
+      'DERBY_BUNDLED_AT': (new Date()).toISOString(),
+      'DERBY_SCRIPT_HASH': 'm4gic_h4$h',
     }),
     new WebpackDeduplicationPlugin({}),
     new DerbyViewsPlugin(),
+    new WebpackManifestPlugin({ writeToFileEmit: true }),
   ],
   resolve: {
     fallback: {

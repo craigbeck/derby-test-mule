@@ -8,6 +8,7 @@ const highway = require('racer-highway');
 
 const webpack = require("webpack");
 const webpackMiddleware = require("webpack-dev-middleware");
+const webpackHotMiddleware = require("webpack-hot-middleware");
 const webpackConfig = require('./webpack.config');
 const webpackCompiler = webpack(webpackConfig);
 
@@ -46,8 +47,9 @@ function setup(app, options, cb) {
     // middleware options...
     serverSideRender: true,
     index: false,
-    publicPath: webpackConfig.output.publicPath
+    publicPath: webpackConfig.output.publicPath,
   }));
+  expressApp.use(webpackHotMiddleware(webpackCompiler));
   expressApp.use(express.static(publicDir));
   expressApp.use(backend.modelMiddleware());
   expressApp.use(app.router());
