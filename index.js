@@ -43,12 +43,13 @@ function setup(app, options, cb) {
   const expressApp = express(options);
 
   var publicDir = __dirname + '/public';
-  expressApp.use(webpackMiddleware(webpackCompiler, {
+  const devMiddleware = webpackMiddleware(webpackCompiler, {
     // middleware options...
     serverSideRender: true,
     index: false,
     publicPath: webpackConfig.output.publicPath,
-  }));
+  })
+  expressApp.use(devMiddleware);
   expressApp.use(webpackHotMiddleware(webpackCompiler));
   expressApp.use(express.static(publicDir));
   expressApp.use(backend.modelMiddleware());

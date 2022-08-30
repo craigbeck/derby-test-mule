@@ -70,20 +70,10 @@ const config = {
   ],
   resolve: {
     fallback: {
-      // bufferutil: false, // ws provides fallback, webpack does not pick up on fallback
-      // 'utf-8-validate': false, // ws provides fallback, webpack does not pick up on fallback
-      // fs: false,  // ws server only
-      // tls: false, // ws server only
-      // crypto: require.resolve('crypto-browserify'),
-      // http: require.resolve('stream-http'),
-      // https: require.resolve('https-browserify'),
-      // os: require.resolve('os-browserify/browser'),
       events: require.resolve('events/'),
       path: require.resolve('path-browserify'),
       process: require.resolve('process/browser'),
       racer: require.resolve('racer'),
-      // stream: require.resolve('stream-browserify'),
-      // zlib: require.resolve('browserify-zlib'),
     },
   },
 };
