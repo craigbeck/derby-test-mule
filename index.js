@@ -12,10 +12,7 @@ const webpackHotMiddleware = require("webpack-hot-middleware");
 const webpackConfig = require('./webpack.config');
 const webpackCompiler = webpack(webpackConfig);
 
-// separate the file for client side code
-// when app.ts was included here racer-bundle tries bundling
-// server code, including node built-ins for the browser
-const app = require('./app');
+let app = require('./app');
 
 const mockBundler = (app) => {
   var Backend = app.Backend || app.Store;
@@ -31,11 +28,29 @@ const mockBundler = (app) => {
   }
 }
 
+const chokidar = require('chokidar');
+const path = require('node:path') ;
+const watcher = chokidar.watch('./app');
+watcher.on('ready', function() {
+  watcher.on('all', function(type, subpath) {
+    console.log(type, subpath);
+    const filepath = path.resolve('.', subpath);
+    const apppath = path.resolve('./app');
+    Object.keys(require.cache).forEach(function(id) {
+      if (filepath.startsWith(apppath)) {
+        console.log('!>', id);
+        delete require.cache[id];
+      }
+    });
+  });
+});
+
+console.log(require.cache);
+
 // derby to use bundler
 derby.use(bundle);
 // derby.use(mockBundler)
 const backend = derby.createBackend();
-
 // wrap backend and get upgrade handlers for websocket
 const handlers = highway(backend);
 
@@ -52,9 +67,28 @@ function setup(app, options, cb) {
   expressApp.use(devMiddleware);
   expressApp.use(webpackHotMiddleware(webpackCompiler));
   expressApp.use(express.static(publicDir));
-  expressApp.use(backend.modelMiddleware());
-  expressApp.use(app.router());
-
+  //// how reload example works to require app again on change as middleware
+  //// we need to add
+  //// 1. backend modelMiddleware
+  //// 2. routes
+  //// 3. upgrade handler/wrtiescripts callback
+  // expressApp.use((req, res, next) => {
+  //   require('./server/app')(req, res, next);
+  // })
+  expressApp.use(backend.modelMiddleware())
+  expressApp.use((req, res, next) => {
+    // require/recreate app
+    // invoke router
+    let app = require('./app');
+    const routerFn = app.router();
+    routerFn(req, res, next);
+  });
+  // expressApp.use((req, res, next) => {
+    //   const modelMiddleware = backend.modelMiddleware();
+    //   const appRouter = app.router();
+    //   modelMiddleware(req, res, appRouter);
+    // });
+    
   const upgradeCallback = handlers.upgrade;
   app.writeScripts(backend, publicDir, { extensions: ['.js'] }, function(err) {
     cb(err, expressApp, upgradeCallback);
@@ -76,12 +110,22 @@ function run(app, options, cb) {
         console.error(err);
         process.exit(3);
       }
-      var server = http.createServer(expressApp);
+      var server = http.createServer((req, res) => {
+        expressApp(req, res);
+      });
       server.on('upgrade', upgrade);
       server.listen(port, listenCallback);
+
+      process.addListener('SIGINFO', () => {
+        if (!server.listening) return;
+        app.restart();
+      })
     });
   }
 
+  // derby.run just calls createServer
+  // only determines if run as clustered worker process
+  // processwhen in dev
   derby.run(createServer);
 }
 

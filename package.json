@@ -7,7 +7,8 @@
   "scripts": {
     "build": "npx webpack",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:debug": "node --inspect index.js"
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +23,7 @@
     "utf-8-validate": "^5.0.9"
   },
   "devDependencies": {
+    "chokidar": "^3.5.3",
     "path-browserify": "^1.0.1",
     "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0",
