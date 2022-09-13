@@ -27,13 +27,11 @@ DerbyViewsPlugin.prototype.apply = function(compiler) {
   });
 }
 
-
-
 const config = {
   mode: 'development',
   entry: [
     'webpack-hot-middleware/client',
-    './app/index.js',
+    './app',
   ],
   optimization: {
     chunkIds: 'named',

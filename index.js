@@ -30,22 +30,22 @@ const mockBundler = (app) => {
 
 const chokidar = require('chokidar');
 const path = require('node:path') ;
-const watcher = chokidar.watch('./app');
+const watcher = chokidar.watch('./app', {ignored:['*.html']});
 watcher.on('ready', function() {
+  const apppath = path.resolve('./app');
+  console.log('WATCHING', apppath);
   watcher.on('all', function(type, subpath) {
-    console.log(type, subpath);
+    console.log('EVENT:', type, subpath);
     const filepath = path.resolve('.', subpath);
-    const apppath = path.resolve('./app');
+    console.log('FILE:', filepath)
     Object.keys(require.cache).forEach(function(id) {
-      if (filepath.startsWith(apppath)) {
+      if (id.startsWith(apppath)) {
         console.log('!>', id);
         delete require.cache[id];
       }
     });
   });
 });
-
-console.log(require.cache);
 
 // derby to use bundler
 derby.use(bundle);
@@ -63,36 +63,23 @@ function setup(app, options, cb) {
     serverSideRender: true,
     index: false,
     publicPath: webpackConfig.output.publicPath,
-  })
+  });
   expressApp.use(devMiddleware);
   expressApp.use(webpackHotMiddleware(webpackCompiler));
   expressApp.use(express.static(publicDir));
-  //// how reload example works to require app again on change as middleware
-  //// we need to add
-  //// 1. backend modelMiddleware
-  //// 2. routes
-  //// 3. upgrade handler/wrtiescripts callback
-  // expressApp.use((req, res, next) => {
-  //   require('./server/app')(req, res, next);
-  // })
-  expressApp.use(backend.modelMiddleware())
+  expressApp.use(backend.modelMiddleware());
   expressApp.use((req, res, next) => {
+    // require cached unless changes cause cache to be cleared
     // require/recreate app
-    // invoke router
     let app = require('./app');
     const routerFn = app.router();
+    // invoke router
     routerFn(req, res, next);
   });
-  // expressApp.use((req, res, next) => {
-    //   const modelMiddleware = backend.modelMiddleware();
-    //   const appRouter = app.router();
-    //   modelMiddleware(req, res, appRouter);
-    // });
-    
-  const upgradeCallback = handlers.upgrade;
-  app.writeScripts(backend, publicDir, { extensions: ['.js'] }, function(err) {
-    cb(err, expressApp, upgradeCallback);
-  });
+  
+  // app._autoRefresh() required to install middleware handlers
+  app._autoRefresh(backend);
+  cb(null, expressApp, handlers.upgrade);
 }
 
 function run(app, options, cb) {

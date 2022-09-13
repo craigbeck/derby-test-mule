@@ -14,85 +14,48 @@
 - something being held open with views plugin -- need to shutdown
   - `./app` already calling `derby.createApp()`
   - HACK: temprarily chenge NODE_ENV to `production` in views plugin
-
 - ShareDBError: Invalid or unknown message
   - chennel created outside of ApporServer?
-  - not going through `AppFroServer._handleMessage()` method
+  - not going through `AppForServer._handleMessage()` method
   - RESOLVED `_handleMessage` registered in `bundle` method via `_autoRefresh` (WTF)
 - `DERBY_SCRIPT_HASH` -- used for reload when browserfy processed bundle
   - needed if webpack handles reload?
   - can't produce hash and include w webpack (hash not available unitl post-build)
 
-
-- webpack assets writen to index via webpack-dev-middleware memory-fs
-  - not picking up new changes in main assets when hot-updates produced
-
-- `APP.page.render()` breaks app as script tags are overwritten
-  - vanilla derby app also has this problem
-  - why not `scripts` as components?
-  - how to reload?
-- simple  `module.hot.accept()` for app breaks w attachement error and double opeing comments for title element;
-
-server reload example
-https://github.com/glenjamin/ultimate-hot-reloading-example
-
-- cant use process cluster mechanism as that is the webpack dev middleware as well, so it gets killed
-
-
 TODO
 ====
+## racer-browserchannel
 - [ ] browserchannel package.json `browser` update
-- [ ] highway package.json `browser` update
 - [ ] replace string replacemant for browserchannel client options
+## racer-highway
+- [ ] highway package.json `browser` update
 - [ ] replace string replacemant for highway client options
-- [ ] derby API update for plugins (channel plugin) -- pass via createApp `options.plugins`?
-- [x] resolve attachment error (was using `{server: true}` on serialization)
+## saddle
 - [x] `saddle` update package `main`
-- [ ] `derby` debrowserified; 
-- [ ] fix `isProduction`: allow using something other than `NODE_ENV === 'production'` (prevent derby watching files and preventing webpack plugin process exiting)
+## derby
 - [x] generate manifest for index.html render
-- [x] hot-reload catching previous value, not current (require module again in apply)
-- [x] initial files never updated in hot reload - i.e. changes never reflected on refresh
+- [x] view updates propogated to client
+- [ ] production build uses written manifest and existing bundles
+- [ ] `derby` debrowserified; 
+- [ ] derby API update for plugins (channel plugin) -- pass via createApp `options.plugins`?
+- [ ] fix `isProduction`: allow using something other than `NODE_ENV === 'production'` (prevent derby watching files and preventing webpack plugin process exiting)
+- [ ] `PageFroServer` writing script tags dependent on webpack-dev-middleware provided thru `res.locals` - abstract?
 - [ ] `derby-loader` to watch `html` files and recompile virtual views module
+
+- [ ] `Tail` is writed in correct place? seems to be inside `script` tag for app state
+
+
 
 REQUEST LIFECYCLE
 - [x] initial request [s0]
 - [x] accept hot-reload module [s1]
 - [x] accept hot-reload module [s2]
 - [x] reload renders [s2] -- renders [s0], new scripts not written to page (stop writing hot-update files to scripts tags)
-- [ ] hot reload app
+- [x] hot reload app
 - [ ] hot reload component
-
-
 TEST MULE APP
-- [ ] figure out app rerender w state serialization (when index.js changes)
-- [ ] server side require of changed modules
+- [x] figure out app rerender w state serialization (when index.js changes)
+- [x] server side require of changed modules
 - [ ] add a component
 - [ ] split route to new file (minimise index.js)
-
-
-
-
-
- ## saddle
- (node:56021) [DEP0128] DeprecationWarning: Invalid 'main' field in '/Users/cbeck/dev/derby2/derby/node_modules/saddle/package.json' of './lib/index.js'. Please either fix that or report it to the module author
-
- ## mold-source-map
- *dont care - browserify dependency*
- (node:56021) [DEP0128] DeprecationWarning: Invalid 'main' field in '/Users/cbeck/dev/derby2/test-mule/node_modules/mold-source-map/package.json' of 'mold-source-map.js'. Please either fix that or report it to the module author
-
-
-## changing app code w `derby.createApp` in scope causes this after re-render
-App.js:63 Uncaught TypeError: Cannot read properties of null (reading 'innerHTML')
-  at App._finishInit (App.js:63:1)
-  at App.js:122:1
-
-`_init()` is called again and script tags have been clobbered then reading app state fails
-
-
-## server reload
-- use cluster and kill child process? (no - webpack in child process as well)
-- `require` on request w middleware (unsure, need more than one middleware from app, and dependencies on start code complicate; even more complicated w `backend-app`)
-- roll derby app into sub-app as integrated middleware (easier integration w express; bigger changes?)
-- `modelMiddleware()` only attaching newly created `model` to request
 
